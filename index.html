@@ -190,7 +190,7 @@
 
     <section id="configCard" class="card">
       <label for="webAppUrl">URL do Web App Apps Script</label>
-      <input id="webAppUrl" type="text" placeholder="https://script.google.com/macros/s/.../exec">
+      <input id="webAppUrl" type="text" placeholder="https://script.google.com/macros/s/.../exec ou https://script.google.com/a/macros/dominio.pt/s/.../exec">
 
       <label for="appToken">Chave de gravação</label>
       <input id="appToken" type="password" placeholder="A mesma APP_TOKEN do Code.gs">
@@ -292,8 +292,9 @@
       const url = el('webAppUrl').value.trim();
       const token = el('appToken').value.trim();
 
-      if (!/^https:\/\/script\.google\.com\/macros\/s\/.+\/exec$/.test(url)) {
-        setStatus('❌ O URL parece inválido. Cola o URL terminado em /exec.', 'erro');
+      if (!urlValidoAppsScript(url)) {
+        setStatus('❌ O URL parece inválido. Cola o URL do Web App terminado em /exec.
+Também aceito URLs com /a/macros/dominio.pt/s/.../exec.', 'erro');
         return;
       }
 
@@ -306,6 +307,24 @@
       localStorage.setItem(CONFIG.localStorageTokenKey, token);
       el('configCard').classList.add('hidden');
       setStatus('✅ Configuração guardada. Bora ler uns códigos.', 'ok');
+    }
+
+
+    function urlValidoAppsScript(url) {
+      try {
+        const u = new URL(url);
+
+        if (u.protocol !== 'https:') return false;
+        if (u.hostname !== 'script.google.com') return false;
+        if (!u.pathname.endsWith('/exec')) return false;
+
+        // Aceita os dois formatos comuns:
+        // https://script.google.com/macros/s/.../exec
+        // https://script.google.com/a/macros/dominio.pt/s/.../exec
+        return /^\/(macros\/s|a\/macros\/[^/]+\/s)\/[^/]+\/exec$/.test(u.pathname);
+      } catch (e) {
+        return false;
+      }
     }
 
     async function prepararScanner() {
