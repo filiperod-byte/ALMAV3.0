@@ -236,6 +236,23 @@
   <script src="https://cdn.jsdelivr.net/npm/html5-qrcode@2.3.8/html5-qrcode.min.js"></script>
 
   <script>
+    window.addEventListener('error', function(event) {
+      var status = document.getElementById('status');
+      if (status) {
+        status.textContent = '❌ Erro JavaScript: ' + (event.message || 'erro desconhecido') + '\nLinha: ' + (event.lineno || '?');
+        status.className = 'erro';
+      }
+    });
+
+    window.addEventListener('unhandledrejection', function(event) {
+      var status = document.getElementById('status');
+      var reason = event.reason && (event.reason.message || event.reason.name) ? (event.reason.message || event.reason.name) : String(event.reason);
+      if (status) {
+        status.textContent = '❌ Erro inesperado: ' + reason;
+        status.className = 'erro';
+      }
+    });
+
     const CONFIG = {
       requiredReads: 2,
       scanTimeoutMs: 20000,
@@ -293,8 +310,7 @@
       const token = el('appToken').value.trim();
 
       if (!urlValidoAppsScript(url)) {
-        setStatus('❌ O URL parece inválido. Cola o URL do Web App terminado em /exec.
-Também aceito URLs com /a/macros/dominio.pt/s/.../exec.', 'erro');
+        setStatus('❌ O URL parece inválido. Cola o URL do Web App terminado em /exec.\nTambém aceito URLs com /a/macros/dominio.pt/s/.../exec.', 'erro');
         return;
       }
 
