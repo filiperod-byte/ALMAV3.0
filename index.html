@@ -4,729 +4,163 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
   <title>Scanner EAN13</title>
-
   <style>
-    :root {
-      --azul: #1a73e8;
-      --verde: #188038;
-      --vermelho: #b3261e;
-      --amarelo-bg: #fff7d6;
-      --amarelo-txt: #6b5200;
-      --cinza-bg: #f5f5f5;
-      --texto: #202124;
-      --card: #ffffff;
-      --borda: #dadce0;
-    }
-
-    * { box-sizing: border-box; margin: 0; padding: 0; }
-
-    body {
-      min-height: 100vh;
-      font-family: Arial, sans-serif;
-      background: var(--cinza-bg);
-      color: var(--texto);
-      display: flex;
-      justify-content: center;
-      padding: 16px;
-    }
-
-    .app {
-      width: 100%;
-      max-width: 480px;
-      display: flex;
-      flex-direction: column;
-      gap: 14px;
-    }
-
-    h1 { font-size: 22px; text-align: center; margin-top: 8px; }
-
-    .card {
-      background: var(--card);
-      border-radius: 16px;
-      padding: 16px;
-      box-shadow: 0 2px 10px rgba(0,0,0,0.08);
-    }
-
-    #status {
-      padding: 12px 14px;
-      border-radius: 12px;
-      font-size: 14px;
-      text-align: center;
-      line-height: 1.4;
-      white-space: pre-line;
-      background: var(--amarelo-bg);
-      color: var(--amarelo-txt);
-    }
-
-    #status.ok { background: #dff3e4; color: #0f5132; }
-    #status.erro { background: #fce8e6; color: var(--vermelho); }
-
-    #reader {
-      width: 100%;
-      min-height: 240px;
-      overflow: hidden;
-      border-radius: 14px;
-      background: #111;
-      position: relative;
-    }
-
-    #reader video,
-    #reader canvas {
-      max-width: 100%;
-      width: 100% !important;
-      height: auto !important;
-      border-radius: 14px;
-    }
-
-    .scan-guide {
-      position: absolute;
-      left: 8%;
-      right: 8%;
-      top: 50%;
-      height: 88px;
-      transform: translateY(-50%);
-      border: 3px solid rgba(255,255,255,.9);
-      border-radius: 10px;
-      pointer-events: none;
-      box-shadow: 0 0 0 9999px rgba(0,0,0,.18);
-    }
-
-    .buttons { display: flex; flex-direction: column; gap: 8px; }
-
-    button {
-      width: 100%;
-      padding: 13px 14px;
-      border: none;
-      border-radius: 12px;
-      font-size: 16px;
-      font-weight: bold;
-      cursor: pointer;
-    }
-
-    button:disabled { opacity: .6; cursor: not-allowed; }
-    .primary { background: var(--azul); color: white; }
-    .success { background: var(--verde); color: white; }
-    .secondary { background: #eef0f3; color: #202124; }
-    .danger { background: #fce8e6; color: var(--vermelho); }
-
-    label {
-      display: block;
-      font-size: 12px;
-      color: #5f6368;
-      margin-bottom: 6px;
-      font-weight: bold;
-    }
-
-    input[type="text"], input[type="password"] {
-      width: 100%;
-      padding: 12px;
-      border: 1px solid var(--borda);
-      border-radius: 10px;
-      font-size: 16px;
-      margin-bottom: 12px;
-      background: white;
-    }
-
-    .codigo {
-      font-size: 28px;
-      font-weight: bold;
-      color: var(--azul);
-      letter-spacing: 2px;
-      word-break: break-word;
-      margin-bottom: 12px;
-      text-align: center;
-    }
-
-    .hidden { display: none !important; }
-
-    #mensagem {
-      min-height: 20px;
-      margin-top: 10px;
-      font-size: 14px;
-      text-align: center;
-      color: var(--verde);
-    }
-
-    #mensagem.erro-msg { color: var(--vermelho); }
-
-    .small {
-      font-size: 12px;
-      color: #5f6368;
-      line-height: 1.4;
-      text-align: center;
-    }
-
-    .manual-row { display: flex; flex-direction: column; gap: 8px; }
+    :root{--azul:#1a73e8;--verde:#188038;--vermelho:#b3261e;--amarelo-bg:#fff7d6;--amarelo-txt:#6b5200;--cinza-bg:#f5f5f5;--texto:#202124;--card:#fff;--borda:#dadce0}
+    *{box-sizing:border-box;margin:0;padding:0}
+    body{min-height:100vh;font-family:Arial,sans-serif;background:var(--cinza-bg);color:var(--texto);display:flex;justify-content:center;padding:16px}
+    .app{width:100%;max-width:480px;display:flex;flex-direction:column;gap:14px}
+    h1{font-size:22px;text-align:center;margin-top:8px}.card{background:var(--card);border-radius:16px;padding:16px;box-shadow:0 2px 10px rgba(0,0,0,.08)}
+    #status{padding:12px 14px;border-radius:12px;font-size:14px;text-align:center;line-height:1.4;white-space:pre-line;background:var(--amarelo-bg);color:var(--amarelo-txt)}
+    #status.ok{background:#dff3e4;color:#0f5132}#status.erro{background:#fce8e6;color:var(--vermelho)}
+    #reader{width:100%;min-height:220px;overflow:hidden;border-radius:14px;background:#111;position:relative}#reader video,#reader canvas{max-width:100%;width:100%!important;height:auto!important;border-radius:14px}
+    .scan-guide{position:absolute;left:8%;right:8%;top:50%;height:88px;transform:translateY(-50%);border:3px solid rgba(255,255,255,.9);border-radius:10px;pointer-events:none;box-shadow:0 0 0 9999px rgba(0,0,0,.18)}
+    .buttons{display:flex;flex-direction:column;gap:8px}button{width:100%;padding:13px 14px;border:none;border-radius:12px;font-size:16px;font-weight:bold;cursor:pointer}button:disabled{opacity:.6;cursor:not-allowed}
+    .primary{background:var(--azul);color:#fff}.success{background:var(--verde);color:#fff}.secondary{background:#eef0f3;color:#202124}.danger{background:#fce8e6;color:var(--vermelho)}
+    label{display:block;font-size:12px;color:#5f6368;margin-bottom:6px;font-weight:bold}input[type=text],input[type=password]{width:100%;padding:12px;border:1px solid var(--borda);border-radius:10px;font-size:16px;margin-bottom:12px;background:#fff}
+    .codigo{font-size:28px;font-weight:bold;color:var(--azul);letter-spacing:2px;word-break:break-word;margin-bottom:12px;text-align:center}.hidden{display:none!important}
+    #mensagem{min-height:20px;margin-top:10px;font-size:14px;text-align:center;color:var(--verde)}#mensagem.erro-msg{color:var(--vermelho)}.small{font-size:12px;color:#5f6368;line-height:1.4;text-align:center}.manual-row{display:flex;flex-direction:column;gap:8px}
   </style>
 </head>
 <body>
   <main class="app">
     <h1>📦 Scanner EAN13</h1>
-
     <div id="status">⏳ A carregar...</div>
 
     <section id="configCard" class="card">
       <label for="webAppUrl">URL do Web App Apps Script</label>
       <input id="webAppUrl" type="text" placeholder="https://script.google.com/macros/s/.../exec ou https://script.google.com/a/macros/dominio.pt/s/.../exec">
-
       <label for="appToken">Chave de gravação</label>
       <input id="appToken" type="password" placeholder="A mesma APP_TOKEN do Code.gs">
-
-      <button class="primary" onclick="guardarConfig()">Guardar configuração</button>
+      <div class="buttons">
+        <button class="primary" onclick="guardarConfig()">Guardar configuração</button>
+        <button class="secondary" onclick="testarLigacao()">🔌 Testar ligação Apps Script</button>
+        <button class="secondary" onclick="abrirTesteManual()">🧪 Abrir teste manual</button>
+      </div>
       <p class="small" style="margin-top:10px">A configuração fica guardada apenas neste dispositivo.</p>
     </section>
 
     <section class="card">
-      <div id="reader">
-        <div id="scanGuide" class="scan-guide hidden"></div>
-      </div>
-
+      <div id="reader"><div id="scanGuide" class="scan-guide hidden"></div></div>
       <div class="buttons" style="margin-top:12px">
         <button id="btnIniciar" class="primary" onclick="iniciarScanner()">📷 Iniciar câmara</button>
         <button id="btnFoto" class="success" onclick="abrirFoto()">📸 Tirar foto / escolher imagem</button>
         <button id="btnParar" class="danger hidden" onclick="pararScannerManual()">⏹️ Parar câmara</button>
+        <button class="secondary" onclick="mostrarConfig()">⚙️ Ver/alterar configuração</button>
       </div>
-
       <input id="ficheiroImagem" type="file" accept="image/*" capture="environment" class="hidden" onchange="lerImagemSelecionada(this.files[0])">
-      <p class="small" style="margin-top:10px">Dica: mantém o EAN13 na horizontal, com boa luz, e ocupa a zona branca no centro.</p>
+      <p class="small" style="margin-top:10px">Dica: como a foto já funcionou, usa-a como modo principal enquanto afinamos a câmara direta.</p>
     </section>
 
     <section id="resultado" class="card hidden">
-      <label>Código lido</label>
-      <div class="codigo" id="codigoTexto"></div>
-
-      <label for="notas">Notas opcionais</label>
-      <input id="notas" type="text" placeholder="ex: entrada armazém">
-
+      <label>Código lido</label><div class="codigo" id="codigoTexto"></div>
+      <label for="notas">Notas opcionais</label><input id="notas" type="text" placeholder="ex: entrada armazém">
       <button id="btnGuardar" class="primary" onclick="guardarNoSheet()">💾 Guardar no Sheet</button>
       <button class="secondary" onclick="novoScan()">🔄 Ler outro</button>
-
       <p id="mensagem"></p>
     </section>
 
     <section class="card">
       <label for="codigoManual">Inserção manual</label>
-      <div class="manual-row">
-        <input id="codigoManual" type="text" inputmode="numeric" pattern="[0-9]*" maxlength="13" placeholder="Digita o EAN13 se a leitura falhar">
-        <button class="secondary" onclick="usarCodigoManual()">Usar código manual</button>
-      </div>
+      <div class="manual-row"><input id="codigoManual" type="text" inputmode="numeric" pattern="[0-9]*" maxlength="13" placeholder="Digita o EAN13 se a leitura falhar"><button class="secondary" onclick="usarCodigoManual()">Usar código manual</button></div>
     </section>
   </main>
 
   <script src="https://cdnjs.cloudflare.com/ajax/libs/quagga/0.12.1/quagga.min.js"></script>
-
   <script>
-    window.addEventListener('error', function(event) {
-      var status = document.getElementById('status');
-      if (status) {
-        status.textContent = '❌ Erro JavaScript: ' + (event.message || 'erro desconhecido') + '\nLinha: ' + (event.lineno || '?');
-        status.className = 'erro';
-      }
-    });
+    window.addEventListener('error',function(event){var s=document.getElementById('status');if(s){s.textContent='❌ Erro JavaScript: '+(event.message||'erro desconhecido')+'\nLinha: '+(event.lineno||'?');s.className='erro';}});
+    window.addEventListener('unhandledrejection',function(event){var s=document.getElementById('status');var r=event.reason&&(event.reason.message||event.reason.name)?(event.reason.message||event.reason.name):String(event.reason);if(s){s.textContent='❌ Erro inesperado: '+r;s.className='erro';}});
 
-    window.addEventListener('unhandledrejection', function(event) {
-      var status = document.getElementById('status');
-      var reason = event.reason && (event.reason.message || event.reason.name) ? (event.reason.message || event.reason.name) : String(event.reason);
-      if (status) {
-        status.textContent = '❌ Erro inesperado: ' + reason;
-        status.className = 'erro';
-      }
-    });
+    const CONFIG={requiredReads:2,minConfidence:.18,scanTimeoutMs:25000,localStorageUrlKey:'scannerEAN13_webAppUrl',localStorageTokenKey:'scannerEAN13_token'};
+    let codigoAtual='',leituraConfirmada=false,ultimoCodigo='',contagemMesmoCodigo=0,timeoutScanner=null,quaggaAtivo=false;
+    const el=id=>document.getElementById(id);
+    function setStatus(msg,tipo){el('status').textContent=msg;el('status').className=tipo||'';}
 
-    const CONFIG = {
-      requiredReads: 2,
-      minConfidence: 0.18,
-      scanTimeoutMs: 25000,
-      localStorageUrlKey: 'scannerEAN13_webAppUrl',
-      localStorageTokenKey: 'scannerEAN13_token'
-    };
+    function init(){
+      el('webAppUrl').value=localStorage.getItem(CONFIG.localStorageUrlKey)||'';
+      el('appToken').value=localStorage.getItem(CONFIG.localStorageTokenKey)||'';
+      if(!window.Quagga){setStatus('❌ Motor de leitura Quagga não carregou. Verifica a internet e recarrega.','erro');el('btnIniciar').disabled=true;el('btnFoto').disabled=true;return;}
+      if(!temConfig()){setStatus('⚙️ Primeiro configura o URL do Apps Script e a chave de gravação.','');}
+      else{el('configCard').classList.add('hidden');setStatus('✅ Pronto. Versão v6 com diagnóstico Apps Script.','ok');}
+    }
+    function temConfig(){return Boolean(obterWebAppUrl()&&obterToken());}
+    function obterWebAppUrl(){return(localStorage.getItem(CONFIG.localStorageUrlKey)||'').trim();}
+    function obterToken(){return(localStorage.getItem(CONFIG.localStorageTokenKey)||'').trim();}
+    function mostrarConfig(){el('configCard').classList.remove('hidden');setStatus('⚙️ Confirma o URL e testa a ligação antes de gravar.','');}
 
-    let codigoAtual = '';
-    let leituraConfirmada = false;
-    let ultimoCodigo = '';
-    let contagemMesmoCodigo = 0;
-    let timeoutScanner = null;
-    let quaggaAtivo = false;
+    function guardarConfig(){
+      const url=el('webAppUrl').value.trim();const token=el('appToken').value.trim();
+      if(!urlValidoAppsScript(url)){setStatus('❌ O URL parece inválido. Cola o URL do Web App terminado em /exec.\nTambém aceito URLs com /a/macros/dominio.pt/s/.../exec.','erro');return;}
+      if(!token){setStatus('❌ Falta preencher a chave de gravação.','erro');return;}
+      localStorage.setItem(CONFIG.localStorageUrlKey,url);localStorage.setItem(CONFIG.localStorageTokenKey,token);el('configCard').classList.add('hidden');setStatus('✅ Configuração guardada. Agora carrega em “Testar ligação” se quiseres validar.','ok');
+    }
+    function urlValidoAppsScript(url){try{const u=new URL(url);if(u.protocol!=='https:')return false;if(u.hostname!=='script.google.com')return false;if(!u.pathname.endsWith('/exec'))return false;return /^\/(macros\/s|a\/macros\/[^/]+\/s)\/[^/]+\/exec$/.test(u.pathname);}catch(e){return false;}}
 
-    const el = id => document.getElementById(id);
-
-    function setStatus(msg, tipo) {
-      el('status').textContent = msg;
-      el('status').className = tipo || '';
+    function testarLigacao(){
+      guardarConfigSemFechar();
+      if(!temConfig()){setStatus('⚙️ Falta URL ou chave para testar.','erro');return;}
+      setStatus('⏳ A testar ligação ao Apps Script...', '');
+      chamarAppsScriptJsonp({action:'ping'}).then(res=>{
+        if(res&&res.sucesso){setStatus('✅ Ligação OK ao Apps Script. Já podes guardar no Sheet.','ok');}
+        else{setStatus('❌ Apps Script respondeu, mas com erro: '+(res&&res.erro?res.erro:'resposta inválida'),'erro');}
+      }).catch(err=>{
+        setStatus('❌ Teste falhou: '+erroComunicacao(err)+'\n\nAbre “🧪 Abrir teste manual” para ver se aparece uma página de login/erro do Google.','erro');
+      });
+    }
+    function guardarConfigSemFechar(){const url=el('webAppUrl').value.trim();const token=el('appToken').value.trim();if(urlValidoAppsScript(url))localStorage.setItem(CONFIG.localStorageUrlKey,url);if(token)localStorage.setItem(CONFIG.localStorageTokenKey,token);}
+    function abrirTesteManual(){
+      guardarConfigSemFechar();
+      if(!temConfig()){setStatus('⚙️ Falta URL ou chave para abrir o teste.','erro');return;}
+      const url=new URL(obterWebAppUrl());url.searchParams.set('action','ping');url.searchParams.set('callback','testeManual');url.searchParams.set('token',obterToken());window.open(url.toString(),'_blank');
     }
 
-    function init() {
-      el('webAppUrl').value = localStorage.getItem(CONFIG.localStorageUrlKey) || '';
-      el('appToken').value = localStorage.getItem(CONFIG.localStorageTokenKey) || '';
-
-      if (!window.Quagga) {
-        setStatus('❌ Motor de leitura Quagga não carregou. Verifica a internet e recarrega.', 'erro');
-        el('btnIniciar').disabled = true;
-        el('btnFoto').disabled = true;
-        return;
-      }
-
-      if (!temConfig()) {
-        setStatus('⚙️ Primeiro configura o URL do Apps Script e a chave de gravação.', '');
-      } else {
-        el('configCard').classList.add('hidden');
-        setStatus('✅ Pronto. Versão v5 com motor EAN13 dedicado. Clica em “Iniciar câmara”.', 'ok');
-      }
+    async function iniciarScanner(){
+      if(!temConfig()){el('configCard').classList.remove('hidden');setStatus('⚙️ Falta configurar o URL do Apps Script e a chave.','erro');return;}
+      resetLeitura();el('resultado').classList.add('hidden');el('btnIniciar').disabled=true;el('btnFoto').disabled=true;el('btnParar').classList.remove('hidden');el('scanGuide').classList.remove('hidden');setStatus('⏳ A abrir a câmara...','');pararQuaggaSeguro();limparReader();
+      const quaggaConfig={inputStream:{name:'Live',type:'LiveStream',target:el('reader'),constraints:{facingMode:'environment',width:{min:640,ideal:1280},height:{min:480,ideal:720},aspectRatio:{ideal:1.7777778}},area:{top:'25%',right:'5%',left:'5%',bottom:'25%'}},locator:{patchSize:'large',halfSample:false},numOfWorkers:Math.max(1,Math.min(4,navigator.hardwareConcurrency||2)),frequency:12,decoder:{readers:['ean_reader']},locate:true,multiple:false};
+      Quagga.init(quaggaConfig,function(err){if(err){console.error(err);setStatus('❌ Erro ao abrir a câmara: '+erroLegivel(err)+'\nPodes tentar a opção de foto.','erro');desbloquearBotoes();el('scanGuide').classList.add('hidden');return;}try{Quagga.offDetected(processarDeteccaoQuagga);}catch(e){}Quagga.onDetected(processarDeteccaoQuagga);Quagga.start();quaggaAtivo=true;el('scanGuide').classList.remove('hidden');setStatus('📷 Câmara ativa. Mantém o EAN13 na horizontal dentro da moldura.','ok');timeoutScanner=setTimeout(()=>{if(!leituraConfirmada){setStatus('⚠️ Ainda não consegui ler. Usa a opção de foto, que já funcionou melhor neste equipamento.','');}},CONFIG.scanTimeoutMs);});
     }
+    function processarDeteccaoQuagga(result){if(leituraConfirmada||!result||!result.codeResult)return;const codigo=normalizarEAN13(result.codeResult.code||'');const confidence=calcularConfianca(result);if(!validarEAN13(codigo))return;if(confidence>0&&confidence<CONFIG.minConfidence){setStatus('🔎 EAN13 possível: '+codigo+'\nImagem ainda fraca. Mantém estável...','');return;}confirmarCodigo(codigo,'câmara');}
+    function calcularConfianca(result){try{const dc=result.codeResult.decodedCodes||[];const erros=dc.filter(x=>typeof x.error==='number').map(x=>x.error);if(!erros.length)return 1;const media=erros.reduce((a,b)=>a+b,0)/erros.length;return Math.max(0,1-media);}catch(e){return 1;}}
+    function confirmarCodigo(codigo,origem){if(codigo===ultimoCodigo){contagemMesmoCodigo++;}else{ultimoCodigo=codigo;contagemMesmoCodigo=1;}if(contagemMesmoCodigo<CONFIG.requiredReads){setStatus('🔎 EAN13 detetado por '+origem+': '+codigo+'\nA confirmar leitura ('+contagemMesmoCodigo+'/'+CONFIG.requiredReads+')...','');return;}leituraConfirmada=true;codigoAtual=codigo;mostrarResultado(codigo);}
+    function mostrarResultado(codigo){pararQuaggaSeguro();el('scanGuide').classList.add('hidden');el('codigoTexto').textContent=codigo;el('resultado').classList.remove('hidden');el('mensagem').textContent='';el('mensagem').className='';el('btnGuardar').disabled=false;el('btnGuardar').textContent='💾 Guardar no Sheet';setStatus('✅ EAN13 confirmado.','ok');desbloquearBotoes();}
+    function pararScannerManual(){pararQuaggaSeguro();desbloquearBotoes();el('scanGuide').classList.add('hidden');setStatus('⏹️ Câmara parada.','');}
+    function pararQuaggaSeguro(){clearTimeout(timeoutScanner);timeoutScanner=null;if(!window.Quagga)return;try{Quagga.offDetected(processarDeteccaoQuagga);}catch(e){}if(quaggaAtivo){try{Quagga.stop();}catch(e){}}quaggaAtivo=false;}
+    function desbloquearBotoes(){el('btnIniciar').disabled=false;el('btnFoto').disabled=false;el('btnParar').classList.add('hidden');}
+    function limparReader(){const guide=el('scanGuide');el('reader').innerHTML='';el('reader').appendChild(guide);}
+    function abrirFoto(){el('ficheiroImagem').value='';el('ficheiroImagem').click();}
 
-    function temConfig() {
-      return Boolean(obterWebAppUrl() && obterToken());
+    async function lerImagemSelecionada(file){
+      if(!file)return;pararQuaggaSeguro();resetLeitura();el('scanGuide').classList.add('hidden');setStatus('⏳ A analisar imagem...','');
+      try{const codigoNativo=await tentarBarcodeDetectorImagem(file);if(codigoNativo){confirmarCodigo(codigoNativo,'foto');confirmarCodigo(codigoNativo,'foto');return;}}catch(e){console.warn('BarcodeDetector falhou/indisponível:',e);}
+      try{const dataUrl=await lerFicheiroComoDataUrl(file);const codigo=await lerImagemComQuagga(dataUrl);confirmarCodigo(codigo,'foto');confirmarCodigo(codigo,'foto');}catch(err){console.error(err);setStatus('❌ Não consegui ler EAN13 nesta imagem. Tenta tirar a foto mais perto, sem reflexos e com o código inteiro na horizontal.','erro');}
     }
+    async function tentarBarcodeDetectorImagem(file){if(!('BarcodeDetector'in window))return '';let detector;try{detector=new BarcodeDetector({formats:['ean_13']});}catch(e){return '';}const bitmap=await createImageBitmap(file);const resultados=await detector.detect(bitmap);for(const r of resultados||[]){const codigo=normalizarEAN13(r.rawValue||'');if(validarEAN13(codigo))return codigo;}return '';}
+    function lerFicheiroComoDataUrl(file){return new Promise((resolve,reject)=>{const reader=new FileReader();reader.onload=()=>resolve(reader.result);reader.onerror=()=>reject(new Error('Não consegui ler a imagem.'));reader.readAsDataURL(file);});}
+    function lerImagemComQuagga(dataUrl){return new Promise((resolve,reject)=>{Quagga.decodeSingle({src:dataUrl,numOfWorkers:0,inputStream:{size:1280,singleChannel:false},locator:{patchSize:'large',halfSample:false},decoder:{readers:['ean_reader']},locate:true},function(result){if(!result||!result.codeResult){reject(new Error('Imagem sem leitura.'));return;}const codigo=normalizarEAN13(result.codeResult.code||'');if(!validarEAN13(codigo)){reject(new Error('Leitura inválida: '+codigo));return;}resolve(codigo);});});}
+    function usarCodigoManual(){const codigo=normalizarEAN13(el('codigoManual').value);if(!validarEAN13(codigo)){setStatus('❌ O código manual não é um EAN13 válido.','erro');return;}leituraConfirmada=true;codigoAtual=codigo;mostrarResultado(codigo);}
 
-    function obterWebAppUrl() {
-      return (localStorage.getItem(CONFIG.localStorageUrlKey) || '').trim();
+    function guardarNoSheet(){
+      if(!codigoAtual)return;const btn=el('btnGuardar');const msg=el('mensagem');btn.disabled=true;btn.textContent='A guardar...';msg.textContent='';msg.className='';
+      chamarAppsScriptJsonp({action:'save',codigo:codigoAtual,notas:el('notas').value.trim()}).then(res=>{if(!res||!res.sucesso){throw new Error(res&&res.erro?res.erro:'Resposta inválida do Apps Script.');}msg.textContent='✅ Guardado na linha '+res.linha;msg.className='';btn.textContent='✅ Guardado!';setStatus('✅ Gravado no Sheet.','ok');}).catch(err=>{console.error(err);msg.textContent='❌ Erro: '+erroComunicacao(err);msg.className='erro-msg';btn.disabled=false;btn.textContent='💾 Guardar no Sheet';setStatus('❌ Falha ao gravar no Apps Script. Usa “Testar ligação” para diagnosticar.','erro');});
     }
-
-    function obterToken() {
-      return (localStorage.getItem(CONFIG.localStorageTokenKey) || '').trim();
-    }
-
-    function guardarConfig() {
-      const url = el('webAppUrl').value.trim();
-      const token = el('appToken').value.trim();
-
-      if (!urlValidoAppsScript(url)) {
-        setStatus('❌ O URL parece inválido. Cola o URL do Web App terminado em /exec.\nTambém aceito URLs com /a/macros/dominio.pt/s/.../exec.', 'erro');
-        return;
-      }
-
-      if (!token) {
-        setStatus('❌ Falta preencher a chave de gravação.', 'erro');
-        return;
-      }
-
-      localStorage.setItem(CONFIG.localStorageUrlKey, url);
-      localStorage.setItem(CONFIG.localStorageTokenKey, token);
-      el('configCard').classList.add('hidden');
-      setStatus('✅ Configuração guardada. Bora ler uns códigos.', 'ok');
-    }
-
-    function urlValidoAppsScript(url) {
-      try {
-        const u = new URL(url);
-        if (u.protocol !== 'https:') return false;
-        if (u.hostname !== 'script.google.com') return false;
-        if (!u.pathname.endsWith('/exec')) return false;
-        return /^\/(macros\/s|a\/macros\/[^/]+\/s)\/[^/]+\/exec$/.test(u.pathname);
-      } catch (e) {
-        return false;
-      }
-    }
-
-    async function iniciarScanner() {
-      if (!temConfig()) {
-        el('configCard').classList.remove('hidden');
-        setStatus('⚙️ Falta configurar o URL do Apps Script e a chave.', 'erro');
-        return;
-      }
-
-      resetLeitura();
-      el('resultado').classList.add('hidden');
-      el('btnIniciar').disabled = true;
-      el('btnFoto').disabled = true;
-      el('btnParar').classList.remove('hidden');
-      el('scanGuide').classList.remove('hidden');
-
-      setStatus('⏳ A abrir a câmara...', '');
-
-      pararQuaggaSeguro();
-      limparReader();
-
-      const quaggaConfig = {
-        inputStream: {
-          name: 'Live',
-          type: 'LiveStream',
-          target: el('reader'),
-          constraints: {
-            facingMode: 'environment',
-            width: { min: 640, ideal: 1280 },
-            height: { min: 480, ideal: 720 },
-            aspectRatio: { ideal: 1.7777778 }
-          },
-          area: {
-            top: '25%',
-            right: '5%',
-            left: '5%',
-            bottom: '25%'
-          }
-        },
-        locator: {
-          patchSize: 'large',
-          halfSample: false
-        },
-        numOfWorkers: Math.max(1, Math.min(4, navigator.hardwareConcurrency || 2)),
-        frequency: 12,
-        decoder: {
-          readers: ['ean_reader']
-        },
-        locate: true,
-        multiple: false
-      };
-
-      Quagga.init(quaggaConfig, function(err) {
-        if (err) {
-          console.error(err);
-          setStatus('❌ Erro ao abrir a câmara: ' + erroLegivel(err) + '\nPodes tentar a opção de foto.', 'erro');
-          desbloquearBotoes();
-          el('scanGuide').classList.add('hidden');
-          return;
-        }
-
-        try {
-          Quagga.offDetected(processarDeteccaoQuagga);
-        } catch (e) {}
-
-        Quagga.onDetected(processarDeteccaoQuagga);
-        Quagga.start();
-        quaggaAtivo = true;
-
-        el('scanGuide').classList.remove('hidden');
-        setStatus('📷 Câmara ativa. Mantém o EAN13 na horizontal dentro da moldura.', 'ok');
-
-        timeoutScanner = setTimeout(() => {
-          if (!leituraConfirmada) {
-            setStatus('⚠️ Ainda não consegui ler. Dicas rápidas:\n1) afasta/aproxima devagar\n2) evita reflexos\n3) deixa o código ocupar a moldura\n4) tenta a opção de foto.', '');
-          }
-        }, CONFIG.scanTimeoutMs);
+    function chamarAppsScriptJsonp(params){
+      return new Promise((resolve,reject)=>{const callbackName='scannerCallback_'+Date.now()+'_'+Math.floor(Math.random()*100000);const script=document.createElement('script');let callbackChamado=false;const timer=setTimeout(()=>{limpar();reject(new Error('Tempo esgotado. O Apps Script não chamou o callback. Pode ser deploy antigo, permissões ou página de login.'));},15000);
+        function limpar(){clearTimeout(timer);delete window[callbackName];if(script.parentNode)script.parentNode.removeChild(script);}
+        window[callbackName]=resposta=>{callbackChamado=true;limpar();resolve(resposta);};
+        const url=new URL(obterWebAppUrl());Object.keys(params||{}).forEach(k=>url.searchParams.set(k,params[k]));url.searchParams.set('callback',callbackName);url.searchParams.set('token',obterToken());
+        script.onload=()=>{setTimeout(()=>{if(!callbackChamado){limpar();reject(new Error('A resposta carregou, mas não executou o callback. O Apps Script pode estar a devolver HTML/texto em vez de JSONP.'));}},100);};
+        script.onerror=()=>{limpar();reject(new Error('O browser não conseguiu carregar a resposta do Apps Script. Normalmente é permissão/deploy ou página de autenticação.'));};
+        script.src=url.toString();document.body.appendChild(script);
       });
     }
 
-    function processarDeteccaoQuagga(result) {
-      if (leituraConfirmada || !result || !result.codeResult) return;
-
-      const codigo = normalizarEAN13(result.codeResult.code || '');
-      const confidence = calcularConfianca(result);
-
-      if (!validarEAN13(codigo)) {
-        return;
-      }
-
-      if (confidence > 0 && confidence < CONFIG.minConfidence) {
-        setStatus('🔎 EAN13 possível: ' + codigo + '\nImagem ainda fraca. Mantém estável...', '');
-        return;
-      }
-
-      confirmarCodigo(codigo, 'câmara');
-    }
-
-    function calcularConfianca(result) {
-      try {
-        const decodedCodes = result.codeResult.decodedCodes || [];
-        const erros = decodedCodes
-          .filter(x => typeof x.error === 'number')
-          .map(x => x.error);
-
-        if (!erros.length) return 1;
-
-        const mediaErro = erros.reduce((a, b) => a + b, 0) / erros.length;
-        return Math.max(0, 1 - mediaErro);
-      } catch (e) {
-        return 1;
-      }
-    }
-
-    function confirmarCodigo(codigo, origem) {
-      if (codigo === ultimoCodigo) {
-        contagemMesmoCodigo++;
-      } else {
-        ultimoCodigo = codigo;
-        contagemMesmoCodigo = 1;
-      }
-
-      if (contagemMesmoCodigo < CONFIG.requiredReads) {
-        setStatus('🔎 EAN13 detetado por ' + origem + ': ' + codigo + '\nA confirmar leitura (' + contagemMesmoCodigo + '/' + CONFIG.requiredReads + ')...', '');
-        return;
-      }
-
-      leituraConfirmada = true;
-      codigoAtual = codigo;
-      mostrarResultado(codigo);
-    }
-
-    function mostrarResultado(codigo) {
-      pararQuaggaSeguro();
-      el('scanGuide').classList.add('hidden');
-      el('codigoTexto').textContent = codigo;
-      el('resultado').classList.remove('hidden');
-      el('mensagem').textContent = '';
-      el('mensagem').className = '';
-      el('btnGuardar').disabled = false;
-      el('btnGuardar').textContent = '💾 Guardar no Sheet';
-      setStatus('✅ EAN13 confirmado.', 'ok');
-      desbloquearBotoes();
-    }
-
-    function pararScannerManual() {
-      pararQuaggaSeguro();
-      desbloquearBotoes();
-      el('scanGuide').classList.add('hidden');
-      setStatus('⏹️ Câmara parada.', '');
-    }
-
-    function pararQuaggaSeguro() {
-      clearTimeout(timeoutScanner);
-      timeoutScanner = null;
-
-      if (!window.Quagga) return;
-
-      try { Quagga.offDetected(processarDeteccaoQuagga); } catch (e) {}
-
-      if (quaggaAtivo) {
-        try { Quagga.stop(); } catch (e) {}
-      }
-
-      quaggaAtivo = false;
-    }
-
-    function desbloquearBotoes() {
-      el('btnIniciar').disabled = false;
-      el('btnFoto').disabled = false;
-      el('btnParar').classList.add('hidden');
-    }
-
-    function limparReader() {
-      const guide = el('scanGuide');
-      el('reader').innerHTML = '';
-      el('reader').appendChild(guide);
-    }
-
-    function abrirFoto() {
-      el('ficheiroImagem').value = '';
-      el('ficheiroImagem').click();
-    }
-
-    async function lerImagemSelecionada(file) {
-      if (!file) return;
-
-      pararQuaggaSeguro();
-      resetLeitura();
-      el('scanGuide').classList.add('hidden');
-      setStatus('⏳ A analisar imagem...', '');
-
-      try {
-        const codigoNativo = await tentarBarcodeDetectorImagem(file);
-        if (codigoNativo) {
-          confirmarCodigo(codigoNativo, 'foto');
-          confirmarCodigo(codigoNativo, 'foto');
-          return;
-        }
-      } catch (e) {
-        console.warn('BarcodeDetector falhou/indisponível:', e);
-      }
-
-      try {
-        const dataUrl = await lerFicheiroComoDataUrl(file);
-        const codigo = await lerImagemComQuagga(dataUrl);
-        confirmarCodigo(codigo, 'foto');
-        confirmarCodigo(codigo, 'foto');
-      } catch (err) {
-        console.error(err);
-        setStatus('❌ Não consegui ler EAN13 nesta imagem. Tenta tirar a foto mais perto, sem reflexos e com o código inteiro na horizontal.', 'erro');
-      }
-    }
-
-    async function tentarBarcodeDetectorImagem(file) {
-      if (!('BarcodeDetector' in window)) return '';
-
-      let detector;
-      try {
-        detector = new BarcodeDetector({ formats: ['ean_13'] });
-      } catch (e) {
-        return '';
-      }
-
-      const bitmap = await createImageBitmap(file);
-      const resultados = await detector.detect(bitmap);
-
-      for (const r of resultados || []) {
-        const codigo = normalizarEAN13(r.rawValue || '');
-        if (validarEAN13(codigo)) return codigo;
-      }
-
-      return '';
-    }
-
-    function lerFicheiroComoDataUrl(file) {
-      return new Promise((resolve, reject) => {
-        const reader = new FileReader();
-        reader.onload = () => resolve(reader.result);
-        reader.onerror = () => reject(new Error('Não consegui ler a imagem.'));
-        reader.readAsDataURL(file);
-      });
-    }
-
-    function lerImagemComQuagga(dataUrl) {
-      return new Promise((resolve, reject) => {
-        Quagga.decodeSingle({
-          src: dataUrl,
-          numOfWorkers: 0,
-          inputStream: {
-            size: 1280,
-            singleChannel: false
-          },
-          locator: {
-            patchSize: 'large',
-            halfSample: false
-          },
-          decoder: {
-            readers: ['ean_reader']
-          },
-          locate: true
-        }, function(result) {
-          if (!result || !result.codeResult) {
-            reject(new Error('Imagem sem leitura.'));
-            return;
-          }
-
-          const codigo = normalizarEAN13(result.codeResult.code || '');
-          if (!validarEAN13(codigo)) {
-            reject(new Error('Leitura inválida: ' + codigo));
-            return;
-          }
-
-          resolve(codigo);
-        });
-      });
-    }
-
-    function usarCodigoManual() {
-      const codigo = normalizarEAN13(el('codigoManual').value);
-
-      if (!validarEAN13(codigo)) {
-        setStatus('❌ O código manual não é um EAN13 válido.', 'erro');
-        return;
-      }
-
-      leituraConfirmada = true;
-      codigoAtual = codigo;
-      mostrarResultado(codigo);
-    }
-
-    function guardarNoSheet() {
-      if (!codigoAtual) return;
-
-      const btn = el('btnGuardar');
-      const msg = el('mensagem');
-
-      btn.disabled = true;
-      btn.textContent = 'A guardar...';
-      msg.textContent = '';
-      msg.className = '';
-
-      guardarViaJsonp({
-        codigo: codigoAtual,
-        notas: el('notas').value.trim()
-      }).then(res => {
-        if (!res || !res.sucesso) {
-          throw new Error(res && res.erro ? res.erro : 'Resposta inválida do Apps Script.');
-        }
-
-        msg.textContent = '✅ Guardado na linha ' + res.linha;
-        msg.className = '';
-        btn.textContent = '✅ Guardado!';
-      }).catch(err => {
-        console.error(err);
-        msg.textContent = '❌ Erro: ' + erroLegivel(err);
-        msg.className = 'erro-msg';
-        btn.disabled = false;
-        btn.textContent = '💾 Guardar no Sheet';
-      });
-    }
-
-    function guardarViaJsonp(dados) {
-      return new Promise((resolve, reject) => {
-        const callbackName = 'scannerCallback_' + Date.now() + '_' + Math.floor(Math.random() * 100000);
-        const script = document.createElement('script');
-        const timer = setTimeout(() => {
-          limpar();
-          reject(new Error('Tempo esgotado ao gravar no Apps Script.'));
-        }, 15000);
-
-        function limpar() {
-          clearTimeout(timer);
-          delete window[callbackName];
-          if (script.parentNode) script.parentNode.removeChild(script);
-        }
-
-        window[callbackName] = resposta => {
-          limpar();
-          resolve(resposta);
-        };
-
-        const url = new URL(obterWebAppUrl());
-        url.searchParams.set('action', 'save');
-        url.searchParams.set('callback', callbackName);
-        url.searchParams.set('token', obterToken());
-        url.searchParams.set('codigo', dados.codigo);
-        url.searchParams.set('notas', dados.notas || '');
-
-        script.onerror = () => {
-          limpar();
-          reject(new Error('Falha de comunicação com o Apps Script.'));
-        };
-
-        script.src = url.toString();
-        document.body.appendChild(script);
-      });
-    }
-
-    function novoScan() {
-      codigoAtual = '';
-      resetLeitura();
-      el('notas').value = '';
-      el('codigoManual').value = '';
-      el('resultado').classList.add('hidden');
-      el('mensagem').textContent = '';
-      setStatus('✅ Pronto para nova leitura.', 'ok');
-    }
-
-    function resetLeitura() {
-      leituraConfirmada = false;
-      ultimoCodigo = '';
-      contagemMesmoCodigo = 0;
-      codigoAtual = '';
-    }
-
-    function normalizarEAN13(valor) {
-      return String(valor || '').replace(/\D/g, '');
-    }
-
-    function validarEAN13(codigo) {
-      codigo = normalizarEAN13(codigo);
-      if (!/^\d{13}$/.test(codigo)) return false;
-
-      const nums = codigo.split('').map(Number);
-      const check = nums.pop();
-      const soma = nums.reduce((acc, n, i) => acc + n * (i % 2 === 0 ? 1 : 3), 0);
-      const calculado = (10 - (soma % 10)) % 10;
-
-      return calculado === check;
-    }
-
-    function erroLegivel(err) {
-      const texto = String(err && (err.name || err.message) ? (err.name || '') + ' ' + (err.message || '') : err);
-
-      if (/NotAllowedError|Permission denied|permission|camera is not allowed/i.test(texto)) {
-        return 'permissão da câmara recusada. Dá permissão no browser ou usa a opção de foto.';
-      }
-
-      if (/NotFoundError|No camera|Requested device not found/i.test(texto)) {
-        return 'não encontrei nenhuma câmara disponível.';
-      }
-
-      if (/NotReadableError|Could not start video source/i.test(texto)) {
-        return 'a câmara está ocupada por outra app ou não conseguiu iniciar.';
-      }
-
-      return texto;
-    }
-
-    window.addEventListener('load', init);
+    function novoScan(){codigoAtual='';resetLeitura();el('notas').value='';el('codigoManual').value='';el('resultado').classList.add('hidden');el('mensagem').textContent='';setStatus('✅ Pronto para nova leitura.','ok');}
+    function resetLeitura(){leituraConfirmada=false;ultimoCodigo='';contagemMesmoCodigo=0;codigoAtual='';}
+    function normalizarEAN13(valor){return String(valor||'').replace(/\D/g,'');}
+    function validarEAN13(codigo){codigo=normalizarEAN13(codigo);if(!/^\d{13}$/.test(codigo))return false;const nums=codigo.split('').map(Number);const check=nums.pop();const soma=nums.reduce((acc,n,i)=>acc+n*(i%2===0?1:3),0);const calculado=(10-(soma%10))%10;return calculado===check;}
+    function erroLegivel(err){const texto=String(err&&(err.name||err.message)?(err.name||'')+' '+(err.message||''):err);if(/NotAllowedError|Permission denied|permission|camera is not allowed/i.test(texto))return 'permissão da câmara recusada. Dá permissão no browser ou usa a opção de foto.';if(/NotFoundError|No camera|Requested device not found/i.test(texto))return 'não encontrei nenhuma câmara disponível.';if(/NotReadableError|Could not start video source/i.test(texto))return 'a câmara está ocupada por outra app ou não conseguiu iniciar.';return texto;}
+    function erroComunicacao(err){const texto=String(err&&(err.message||err.name)?(err.message||err.name):err);if(/Token inválido/i.test(texto))return 'token inválido. Confirma que a chave no telemóvel é igual à APP_TOKEN do Code.gs.';if(/callback|JSONP|HTML|login|autenticação|carregar a resposta|Tempo esgotado/i.test(texto))return texto+'\nCausas prováveis: Code.gs antigo, falta fazer New deployment, ou Web App sem acesso “Anyone”.';return texto;}
+    window.addEventListener('load',init);
   </script>
 </body>
 </html>
