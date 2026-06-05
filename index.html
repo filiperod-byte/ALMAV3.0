@@ -80,7 +80,7 @@
       el('appToken').value=localStorage.getItem(CONFIG.localStorageTokenKey)||'';
       if(!window.Quagga){setStatus('❌ Motor de leitura Quagga não carregou. Verifica a internet e recarrega.','erro');el('btnIniciar').disabled=true;el('btnFoto').disabled=true;return;}
       if(!temConfig()){setStatus('⚙️ Primeiro configura o URL do Apps Script e a chave de gravação.','');}
-      else{el('configCard').classList.add('hidden');setStatus('✅ Pronto. Versão v6 com diagnóstico Apps Script.','ok');}
+      else{el('configCard').classList.add('hidden');setStatus('✅ Pronto. Versão v7 com callback fixo Apps Script.','ok');}
     }
     function temConfig(){return Boolean(obterWebAppUrl()&&obterToken());}
     function obterWebAppUrl(){return(localStorage.getItem(CONFIG.localStorageUrlKey)||'').trim();}
@@ -98,19 +98,19 @@
     function testarLigacao(){
       guardarConfigSemFechar();
       if(!temConfig()){setStatus('⚙️ Falta URL ou chave para testar.','erro');return;}
-      setStatus('⏳ A testar ligação ao Apps Script...', '');
+      setStatus('⏳ A testar ligação ao Apps Script com callback fixo...', '');
       chamarAppsScriptJsonp({action:'ping'}).then(res=>{
         if(res&&res.sucesso){setStatus('✅ Ligação OK ao Apps Script. Já podes guardar no Sheet.','ok');}
         else{setStatus('❌ Apps Script respondeu, mas com erro: '+(res&&res.erro?res.erro:'resposta inválida'),'erro');}
       }).catch(err=>{
-        setStatus('❌ Teste falhou: '+erroComunicacao(err)+'\n\nAbre “🧪 Abrir teste manual” para ver se aparece uma página de login/erro do Google.','erro');
+        setStatus('❌ Teste falhou: '+erroComunicacao(err)+'\n\nComo o teste manual abriu OK, testa agora gravar um EAN pela foto.','erro');
       });
     }
     function guardarConfigSemFechar(){const url=el('webAppUrl').value.trim();const token=el('appToken').value.trim();if(urlValidoAppsScript(url))localStorage.setItem(CONFIG.localStorageUrlKey,url);if(token)localStorage.setItem(CONFIG.localStorageTokenKey,token);}
     function abrirTesteManual(){
       guardarConfigSemFechar();
       if(!temConfig()){setStatus('⚙️ Falta URL ou chave para abrir o teste.','erro');return;}
-      const url=new URL(obterWebAppUrl());url.searchParams.set('action','ping');url.searchParams.set('callback','testeManual');url.searchParams.set('token',obterToken());window.open(url.toString(),'_blank');
+      const url=new URL(obterWebAppUrl());url.searchParams.set('action','ping');url.searchParams.set('callback','testeManual');url.searchParams.set('token',obterToken());url.searchParams.set('_',Date.now());window.open(url.toString(),'_blank');
     }
 
     async function iniciarScanner(){
@@ -141,15 +141,15 @@
 
     function guardarNoSheet(){
       if(!codigoAtual)return;const btn=el('btnGuardar');const msg=el('mensagem');btn.disabled=true;btn.textContent='A guardar...';msg.textContent='';msg.className='';
-      chamarAppsScriptJsonp({action:'save',codigo:codigoAtual,notas:el('notas').value.trim()}).then(res=>{if(!res||!res.sucesso){throw new Error(res&&res.erro?res.erro:'Resposta inválida do Apps Script.');}msg.textContent='✅ Guardado na linha '+res.linha;msg.className='';btn.textContent='✅ Guardado!';setStatus('✅ Gravado no Sheet.','ok');}).catch(err=>{console.error(err);msg.textContent='❌ Erro: '+erroComunicacao(err);msg.className='erro-msg';btn.disabled=false;btn.textContent='💾 Guardar no Sheet';setStatus('❌ Falha ao gravar no Apps Script. Usa “Testar ligação” para diagnosticar.','erro');});
+      chamarAppsScriptJsonp({action:'save',codigo:codigoAtual,notas:el('notas').value.trim()}).then(res=>{if(!res||!res.sucesso){throw new Error(res&&res.erro?res.erro:'Resposta inválida do Apps Script.');}msg.textContent='✅ Guardado na linha '+res.linha;msg.className='';btn.textContent='✅ Guardado!';setStatus('✅ Gravado no Sheet.','ok');}).catch(err=>{console.error(err);msg.textContent='❌ Erro: '+erroComunicacao(err);msg.className='erro-msg';btn.disabled=false;btn.textContent='💾 Guardar no Sheet';setStatus('❌ Falha ao gravar no Apps Script. Como o teste manual está OK, confirma se a linha apareceu no Sheet.','erro');});
     }
     function chamarAppsScriptJsonp(params){
-      return new Promise((resolve,reject)=>{const callbackName='scannerCallback_'+Date.now()+'_'+Math.floor(Math.random()*100000);const script=document.createElement('script');let callbackChamado=false;const timer=setTimeout(()=>{limpar();reject(new Error('Tempo esgotado. O Apps Script não chamou o callback. Pode ser deploy antigo, permissões ou página de login.'));},15000);
-        function limpar(){clearTimeout(timer);delete window[callbackName];if(script.parentNode)script.parentNode.removeChild(script);}
+      return new Promise((resolve,reject)=>{const callbackName='testeManual';const script=document.createElement('script');let callbackChamado=false;const anterior=window[callbackName];const timer=setTimeout(()=>{limpar();reject(new Error('Tempo esgotado. O Apps Script não chamou o callback fixo testeManual.'));},15000);
+        function limpar(){clearTimeout(timer);window[callbackName]=anterior;if(script.parentNode)script.parentNode.removeChild(script);}
         window[callbackName]=resposta=>{callbackChamado=true;limpar();resolve(resposta);};
-        const url=new URL(obterWebAppUrl());Object.keys(params||{}).forEach(k=>url.searchParams.set(k,params[k]));url.searchParams.set('callback',callbackName);url.searchParams.set('token',obterToken());
-        script.onload=()=>{setTimeout(()=>{if(!callbackChamado){limpar();reject(new Error('A resposta carregou, mas não executou o callback. O Apps Script pode estar a devolver HTML/texto em vez de JSONP.'));}},100);};
-        script.onerror=()=>{limpar();reject(new Error('O browser não conseguiu carregar a resposta do Apps Script. Normalmente é permissão/deploy ou página de autenticação.'));};
+        const url=new URL(obterWebAppUrl());Object.keys(params||{}).forEach(k=>url.searchParams.set(k,params[k]));url.searchParams.set('callback',callbackName);url.searchParams.set('token',obterToken());url.searchParams.set('_',Date.now());
+        script.onload=()=>{setTimeout(()=>{if(!callbackChamado){limpar();reject(new Error('A resposta carregou, mas não executou testeManual.'));}},500);};
+        script.onerror=()=>{limpar();reject(new Error('O browser não conseguiu carregar a resposta do Apps Script.'));};
         script.src=url.toString();document.body.appendChild(script);
       });
     }
@@ -159,7 +159,7 @@
     function normalizarEAN13(valor){return String(valor||'').replace(/\D/g,'');}
     function validarEAN13(codigo){codigo=normalizarEAN13(codigo);if(!/^\d{13}$/.test(codigo))return false;const nums=codigo.split('').map(Number);const check=nums.pop();const soma=nums.reduce((acc,n,i)=>acc+n*(i%2===0?1:3),0);const calculado=(10-(soma%10))%10;return calculado===check;}
     function erroLegivel(err){const texto=String(err&&(err.name||err.message)?(err.name||'')+' '+(err.message||''):err);if(/NotAllowedError|Permission denied|permission|camera is not allowed/i.test(texto))return 'permissão da câmara recusada. Dá permissão no browser ou usa a opção de foto.';if(/NotFoundError|No camera|Requested device not found/i.test(texto))return 'não encontrei nenhuma câmara disponível.';if(/NotReadableError|Could not start video source/i.test(texto))return 'a câmara está ocupada por outra app ou não conseguiu iniciar.';return texto;}
-    function erroComunicacao(err){const texto=String(err&&(err.message||err.name)?(err.message||err.name):err);if(/Token inválido/i.test(texto))return 'token inválido. Confirma que a chave no telemóvel é igual à APP_TOKEN do Code.gs.';if(/callback|JSONP|HTML|login|autenticação|carregar a resposta|Tempo esgotado/i.test(texto))return texto+'\nCausas prováveis: Code.gs antigo, falta fazer New deployment, ou Web App sem acesso “Anyone”.';return texto;}
+    function erroComunicacao(err){const texto=String(err&&(err.message||err.name)?(err.message||err.name):err);if(/Token inválido/i.test(texto))return 'token inválido. Confirma que a chave no telemóvel é igual à APP_TOKEN do Code.gs.';if(/callback|JSONP|HTML|login|autenticação|carregar a resposta|Tempo esgotado|testeManual/i.test(texto))return texto+'\nComo o teste manual está OK, isto parece bloqueio do browser ao script cross-site. A gravação pode ainda ter acontecido no Sheet.';return texto;}
     window.addEventListener('load',init);
   </script>
 </body>
