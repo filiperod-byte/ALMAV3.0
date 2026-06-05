@@ -1,0 +1,632 @@
+<!DOCTYPE html>
+<html lang="pt-PT">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+  <title>Scanner EAN13</title>
+
+  <style>
+    :root {
+      --azul: #1a73e8;
+      --verde: #188038;
+      --vermelho: #b3261e;
+      --amarelo-bg: #fff7d6;
+      --amarelo-txt: #6b5200;
+      --cinza-bg: #f5f5f5;
+      --texto: #202124;
+      --card: #ffffff;
+      --borda: #dadce0;
+    }
+
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+    }
+
+    body {
+      min-height: 100vh;
+      font-family: Arial, sans-serif;
+      background: var(--cinza-bg);
+      color: var(--texto);
+      display: flex;
+      justify-content: center;
+      padding: 16px;
+    }
+
+    .app {
+      width: 100%;
+      max-width: 480px;
+      display: flex;
+      flex-direction: column;
+      gap: 14px;
+    }
+
+    h1 {
+      font-size: 22px;
+      text-align: center;
+      margin-top: 8px;
+    }
+
+    .card {
+      background: var(--card);
+      border-radius: 16px;
+      padding: 16px;
+      box-shadow: 0 2px 10px rgba(0,0,0,0.08);
+    }
+
+    #status {
+      padding: 12px 14px;
+      border-radius: 12px;
+      font-size: 14px;
+      text-align: center;
+      line-height: 1.4;
+      white-space: pre-line;
+      background: var(--amarelo-bg);
+      color: var(--amarelo-txt);
+    }
+
+    #status.ok {
+      background: #dff3e4;
+      color: #0f5132;
+    }
+
+    #status.erro {
+      background: #fce8e6;
+      color: var(--vermelho);
+    }
+
+    #reader {
+      width: 100%;
+      overflow: hidden;
+      border-radius: 14px;
+      background: #111;
+    }
+
+    .buttons {
+      display: flex;
+      flex-direction: column;
+      gap: 8px;
+    }
+
+    button {
+      width: 100%;
+      padding: 13px 14px;
+      border: none;
+      border-radius: 12px;
+      font-size: 16px;
+      font-weight: bold;
+      cursor: pointer;
+    }
+
+    button:disabled {
+      opacity: .6;
+      cursor: not-allowed;
+    }
+
+    .primary {
+      background: var(--azul);
+      color: white;
+    }
+
+    .success {
+      background: var(--verde);
+      color: white;
+    }
+
+    .secondary {
+      background: #eef0f3;
+      color: #202124;
+    }
+
+    .danger {
+      background: #fce8e6;
+      color: var(--vermelho);
+    }
+
+    label {
+      display: block;
+      font-size: 12px;
+      color: #5f6368;
+      margin-bottom: 6px;
+      font-weight: bold;
+    }
+
+    input[type="text"], input[type="password"] {
+      width: 100%;
+      padding: 12px;
+      border: 1px solid var(--borda);
+      border-radius: 10px;
+      font-size: 16px;
+      margin-bottom: 12px;
+      background: white;
+    }
+
+    .codigo {
+      font-size: 28px;
+      font-weight: bold;
+      color: var(--azul);
+      letter-spacing: 2px;
+      word-break: break-word;
+      margin-bottom: 12px;
+      text-align: center;
+    }
+
+    .hidden {
+      display: none !important;
+    }
+
+    #mensagem {
+      min-height: 20px;
+      margin-top: 10px;
+      font-size: 14px;
+      text-align: center;
+      color: var(--verde);
+    }
+
+    #mensagem.erro-msg {
+      color: var(--vermelho);
+    }
+
+    .small {
+      font-size: 12px;
+      color: #5f6368;
+      line-height: 1.4;
+      text-align: center;
+    }
+
+    .manual-row {
+      display: flex;
+      flex-direction: column;
+      gap: 8px;
+    }
+  </style>
+</head>
+<body>
+  <main class="app">
+    <h1>📦 Scanner EAN13</h1>
+
+    <div id="status">⏳ A carregar...</div>
+
+    <section id="configCard" class="card">
+      <label for="webAppUrl">URL do Web App Apps Script</label>
+      <input id="webAppUrl" type="text" placeholder="https://script.google.com/macros/s/.../exec">
+
+      <label for="appToken">Chave de gravação</label>
+      <input id="appToken" type="password" placeholder="A mesma APP_TOKEN do Code.gs">
+
+      <button class="primary" onclick="guardarConfig()">Guardar configuração</button>
+      <p class="small" style="margin-top:10px">A configuração fica guardada apenas neste dispositivo.</p>
+    </section>
+
+    <section class="card">
+      <div id="reader"></div>
+
+      <div class="buttons" style="margin-top:12px">
+        <button id="btnIniciar" class="primary" onclick="iniciarScanner()">📷 Iniciar câmara</button>
+        <button id="btnFoto" class="success" onclick="abrirFoto()">📸 Tirar foto / escolher imagem</button>
+        <button id="btnParar" class="danger hidden" onclick="pararScannerManual()">⏹️ Parar câmara</button>
+      </div>
+
+      <input id="ficheiroImagem" type="file" accept="image/*" capture="environment" class="hidden" onchange="lerImagemSelecionada(this.files[0])">
+    </section>
+
+    <section id="resultado" class="card hidden">
+      <label>Código lido</label>
+      <div class="codigo" id="codigoTexto"></div>
+
+      <label for="notas">Notas opcionais</label>
+      <input id="notas" type="text" placeholder="ex: entrada armazém">
+
+      <button id="btnGuardar" class="primary" onclick="guardarNoSheet()">💾 Guardar no Sheet</button>
+      <button class="secondary" onclick="novoScan()">🔄 Ler outro</button>
+
+      <p id="mensagem"></p>
+    </section>
+
+    <section class="card">
+      <label for="codigoManual">Inserção manual</label>
+      <div class="manual-row">
+        <input id="codigoManual" type="text" inputmode="numeric" pattern="[0-9]*" maxlength="13" placeholder="Digita o EAN13 se a leitura falhar">
+        <button class="secondary" onclick="usarCodigoManual()">Usar código manual</button>
+      </div>
+    </section>
+  </main>
+
+  <script src="https://cdn.jsdelivr.net/npm/html5-qrcode@2.3.8/html5-qrcode.min.js"></script>
+
+  <script>
+    const CONFIG = {
+      requiredReads: 2,
+      scanTimeoutMs: 20000,
+      localStorageUrlKey: 'scannerEAN13_webAppUrl',
+      localStorageTokenKey: 'scannerEAN13_token'
+    };
+
+    let scanner = null;
+    let codigoAtual = '';
+    let leituraConfirmada = false;
+    let ultimoCodigo = '';
+    let contagemMesmoCodigo = 0;
+    let timeoutScanner = null;
+
+    const el = id => document.getElementById(id);
+
+    function setStatus(msg, tipo) {
+      el('status').textContent = msg;
+      el('status').className = tipo || '';
+    }
+
+    function init() {
+      el('webAppUrl').value = localStorage.getItem(CONFIG.localStorageUrlKey) || '';
+      el('appToken').value = localStorage.getItem(CONFIG.localStorageTokenKey) || '';
+
+      if (!window.Html5Qrcode) {
+        setStatus('❌ Biblioteca de leitura não carregou. Verifica a internet e recarrega.', 'erro');
+        el('btnIniciar').disabled = true;
+        el('btnFoto').disabled = true;
+        return;
+      }
+
+      if (!temConfig()) {
+        setStatus('⚙️ Primeiro configura o URL do Apps Script e a chave de gravação.', '');
+      } else {
+        el('configCard').classList.add('hidden');
+        setStatus('✅ Pronto. Clica em “Iniciar câmara”.', 'ok');
+      }
+    }
+
+    function temConfig() {
+      return Boolean(obterWebAppUrl() && obterToken());
+    }
+
+    function obterWebAppUrl() {
+      return (localStorage.getItem(CONFIG.localStorageUrlKey) || '').trim();
+    }
+
+    function obterToken() {
+      return (localStorage.getItem(CONFIG.localStorageTokenKey) || '').trim();
+    }
+
+    function guardarConfig() {
+      const url = el('webAppUrl').value.trim();
+      const token = el('appToken').value.trim();
+
+      if (!/^https:\/\/script\.google\.com\/macros\/s\/.+\/exec$/.test(url)) {
+        setStatus('❌ O URL parece inválido. Cola o URL terminado em /exec.', 'erro');
+        return;
+      }
+
+      if (!token) {
+        setStatus('❌ Falta preencher a chave de gravação.', 'erro');
+        return;
+      }
+
+      localStorage.setItem(CONFIG.localStorageUrlKey, url);
+      localStorage.setItem(CONFIG.localStorageTokenKey, token);
+      el('configCard').classList.add('hidden');
+      setStatus('✅ Configuração guardada. Bora ler uns códigos.', 'ok');
+    }
+
+    async function prepararScanner() {
+      if (!scanner) {
+        scanner = new Html5Qrcode('reader', true);
+      }
+    }
+
+    async function iniciarScanner() {
+      if (!temConfig()) {
+        el('configCard').classList.remove('hidden');
+        setStatus('⚙️ Falta configurar o URL do Apps Script e a chave.', 'erro');
+        return;
+      }
+
+      leituraConfirmada = false;
+      ultimoCodigo = '';
+      contagemMesmoCodigo = 0;
+      codigoAtual = '';
+      el('resultado').classList.add('hidden');
+      el('btnIniciar').disabled = true;
+      el('btnFoto').disabled = true;
+      el('btnParar').classList.remove('hidden');
+
+      await prepararScanner();
+      setStatus('⏳ A pedir permissão da câmara...', '');
+
+      const config = {
+        fps: 12,
+        qrbox: { width: 320, height: 130 },
+        aspectRatio: 1.777778,
+        formatsToSupport: [Html5QrcodeSupportedFormats.EAN_13],
+        experimentalFeatures: {
+          useBarCodeDetectorIfSupported: true
+        }
+      };
+
+      try {
+        const cameras = await Html5Qrcode.getCameras();
+
+        if (!cameras || !cameras.length) {
+          throw new Error('Nenhuma câmara encontrada.');
+        }
+
+        const cameraTraseira = escolherCameraTraseira(cameras);
+
+        await scanner.start(
+          { deviceId: { exact: cameraTraseira.id } },
+          config,
+          processarLeitura,
+          () => {}
+        );
+
+        setStatus('📷 Câmara ativa. Aproxima o EAN13 e mantém o código na horizontal.', 'ok');
+
+        timeoutScanner = setTimeout(() => {
+          if (!leituraConfirmada) {
+            setStatus('⚠️ Ainda não consegui ler. Experimenta mais luz, aproxima um pouco ou usa a opção de foto.', '');
+          }
+        }, CONFIG.scanTimeoutMs);
+
+      } catch (err) {
+        console.error(err);
+        setStatus('❌ Erro ao abrir a câmara: ' + erroLegivel(err) + '\nPodes tentar a opção de foto.', 'erro');
+        await pararScannerSeguro();
+        desbloquearBotoes();
+      }
+    }
+
+    function escolherCameraTraseira(cameras) {
+      return cameras.find(c => /back|rear|environment|traseira|ambiente/i.test(c.label)) || cameras[cameras.length - 1];
+    }
+
+    async function processarLeitura(decodedText, decodedResult) {
+      if (leituraConfirmada) return;
+
+      const formato = decodedResult?.result?.format?.formatName || '';
+      const codigo = normalizarEAN13(decodedText);
+
+      if (formato && formato !== 'EAN_13') return;
+
+      if (!validarEAN13(codigo)) {
+        setStatus('⚠️ Leitura rejeitada: checksum EAN13 inválido.', '');
+        return;
+      }
+
+      if (codigo === ultimoCodigo) {
+        contagemMesmoCodigo++;
+      } else {
+        ultimoCodigo = codigo;
+        contagemMesmoCodigo = 1;
+      }
+
+      if (contagemMesmoCodigo < CONFIG.requiredReads) {
+        setStatus('🔎 EAN13 detetado: ' + codigo + '\nA confirmar leitura (' + contagemMesmoCodigo + '/' + CONFIG.requiredReads + ')...', '');
+        return;
+      }
+
+      leituraConfirmada = true;
+      codigoAtual = codigo;
+      await mostrarResultado(codigo);
+    }
+
+    async function mostrarResultado(codigo) {
+      await pararScannerSeguro();
+      el('codigoTexto').textContent = codigo;
+      el('resultado').classList.remove('hidden');
+      el('mensagem').textContent = '';
+      el('mensagem').className = '';
+      el('btnGuardar').disabled = false;
+      el('btnGuardar').textContent = '💾 Guardar no Sheet';
+      setStatus('✅ EAN13 confirmado.', 'ok');
+      desbloquearBotoes();
+    }
+
+    async function pararScannerManual() {
+      await pararScannerSeguro();
+      desbloquearBotoes();
+      setStatus('⏹️ Câmara parada.', '');
+    }
+
+    async function pararScannerSeguro() {
+      clearTimeout(timeoutScanner);
+      timeoutScanner = null;
+
+      if (!scanner) return;
+
+      try {
+        await scanner.stop();
+      } catch (e) {
+        // Pode não estar ativo. Tudo certo.
+      }
+
+      try {
+        scanner.clear();
+      } catch (e) {
+        // Ignorar.
+      }
+    }
+
+    function desbloquearBotoes() {
+      el('btnIniciar').disabled = false;
+      el('btnFoto').disabled = false;
+      el('btnParar').classList.add('hidden');
+    }
+
+    function abrirFoto() {
+      el('ficheiroImagem').value = '';
+      el('ficheiroImagem').click();
+    }
+
+    async function lerImagemSelecionada(file) {
+      if (!file) return;
+
+      await pararScannerSeguro();
+      await prepararScanner();
+      setStatus('⏳ A analisar imagem...', '');
+
+      try {
+        let resultado;
+
+        if (scanner.scanFileV2) {
+          resultado = await scanner.scanFileV2(file, true);
+          const texto = resultado?.decodedText || resultado?.text || '';
+          const codigo = normalizarEAN13(texto);
+
+          if (!validarEAN13(codigo)) {
+            throw new Error('Imagem sem EAN13 válido.');
+          }
+
+          leituraConfirmada = true;
+          codigoAtual = codigo;
+          await mostrarResultado(codigo);
+        } else {
+          const texto = await scanner.scanFile(file, true);
+          const codigo = normalizarEAN13(texto);
+
+          if (!validarEAN13(codigo)) {
+            throw new Error('Imagem sem EAN13 válido.');
+          }
+
+          leituraConfirmada = true;
+          codigoAtual = codigo;
+          await mostrarResultado(codigo);
+        }
+
+      } catch (err) {
+        console.error(err);
+        setStatus('❌ Não consegui ler EAN13 na imagem. Tenta com mais luz e código bem focado.', 'erro');
+      }
+    }
+
+    function usarCodigoManual() {
+      const codigo = normalizarEAN13(el('codigoManual').value);
+
+      if (!validarEAN13(codigo)) {
+        setStatus('❌ O código manual não é um EAN13 válido.', 'erro');
+        return;
+      }
+
+      leituraConfirmada = true;
+      codigoAtual = codigo;
+      mostrarResultado(codigo);
+    }
+
+    function guardarNoSheet() {
+      if (!codigoAtual) return;
+
+      const btn = el('btnGuardar');
+      const msg = el('mensagem');
+
+      btn.disabled = true;
+      btn.textContent = 'A guardar...';
+      msg.textContent = '';
+      msg.className = '';
+
+      guardarViaJsonp({
+        codigo: codigoAtual,
+        notas: el('notas').value.trim()
+      }).then(res => {
+        if (!res || !res.sucesso) {
+          throw new Error(res && res.erro ? res.erro : 'Resposta inválida do Apps Script.');
+        }
+
+        msg.textContent = '✅ Guardado na linha ' + res.linha;
+        msg.className = '';
+        btn.textContent = '✅ Guardado!';
+      }).catch(err => {
+        console.error(err);
+        msg.textContent = '❌ Erro: ' + erroLegivel(err);
+        msg.className = 'erro-msg';
+        btn.disabled = false;
+        btn.textContent = '💾 Guardar no Sheet';
+      });
+    }
+
+    function guardarViaJsonp(dados) {
+      return new Promise((resolve, reject) => {
+        const callbackName = 'scannerCallback_' + Date.now() + '_' + Math.floor(Math.random() * 100000);
+        const script = document.createElement('script');
+        const timer = setTimeout(() => {
+          limpar();
+          reject(new Error('Tempo esgotado ao gravar no Apps Script.'));
+        }, 15000);
+
+        function limpar() {
+          clearTimeout(timer);
+          delete window[callbackName];
+          if (script.parentNode) script.parentNode.removeChild(script);
+        }
+
+        window[callbackName] = resposta => {
+          limpar();
+          resolve(resposta);
+        };
+
+        const url = new URL(obterWebAppUrl());
+        url.searchParams.set('action', 'save');
+        url.searchParams.set('callback', callbackName);
+        url.searchParams.set('token', obterToken());
+        url.searchParams.set('codigo', dados.codigo);
+        url.searchParams.set('notas', dados.notas || '');
+
+        script.onerror = () => {
+          limpar();
+          reject(new Error('Falha de comunicação com o Apps Script.'));
+        };
+
+        script.src = url.toString();
+        document.body.appendChild(script);
+      });
+    }
+
+    function novoScan() {
+      codigoAtual = '';
+      leituraConfirmada = false;
+      ultimoCodigo = '';
+      contagemMesmoCodigo = 0;
+      el('notas').value = '';
+      el('codigoManual').value = '';
+      el('resultado').classList.add('hidden');
+      el('mensagem').textContent = '';
+      setStatus('✅ Pronto para nova leitura.', 'ok');
+    }
+
+    function normalizarEAN13(valor) {
+      return String(valor || '').replace(/\D/g, '');
+    }
+
+    function validarEAN13(codigo) {
+      codigo = normalizarEAN13(codigo);
+      if (!/^\d{13}$/.test(codigo)) return false;
+
+      const nums = codigo.split('').map(Number);
+      const check = nums.pop();
+
+      const soma = nums.reduce((acc, n, i) => acc + n * (i % 2 === 0 ? 1 : 3), 0);
+      const calculado = (10 - (soma % 10)) % 10;
+
+      return calculado === check;
+    }
+
+    function erroLegivel(err) {
+      const texto = String(err && (err.name || err.message) ? (err.name || '') + ' ' + (err.message || '') : err);
+
+      if (/NotAllowedError|Permission denied|permission|camera is not allowed/i.test(texto)) {
+        return 'permissão da câmara recusada. Dá permissão no browser ou usa a opção de foto.';
+      }
+
+      if (/NotFoundError|No camera|Requested device not found/i.test(texto)) {
+        return 'não encontrei nenhuma câmara disponível.';
+      }
+
+      if (/NotReadableError|Could not start video source/i.test(texto)) {
+        return 'a câmara está ocupada por outra app ou não conseguiu iniciar.';
+      }
+
+      return texto;
+    }
+
+    window.addEventListener('load', init);
+  </script>
+</body>
+</html>
